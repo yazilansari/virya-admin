@@ -1,0 +1,115 @@
+import { NextRequest, NextResponse } from "next/server";
+import connection from '../../../lib/mysql';
+import { ResultSetHeader } from 'mysql2';
+
+// Define the TypeScript interface for the request body
+interface Accommodation {
+  name: string;
+  rating: string;
+  link: string;
+  imageUrl: string;
+  meals: string[];
+  roomTypes: string[];
+}
+
+interface ItineraryDay {
+  day: number;
+  date: string;
+  description: string;
+  activities: string[];
+  accommodation: Accommodation[];
+}
+
+interface SafariPackage {
+  name: string;
+  duration: string;
+  fromDate: string;
+  toDate: string;
+  nationalParkId: string;
+  itinerary: ItineraryDay[];
+  available: boolean;
+}
+
+export const POST = async (req: NextRequest, res: NextResponse) => {
+  const safariPackage = await req.json(); // Use await to wait for the promise to resolve
+
+  const { name, duration, fromDate, toDate, nationalParkId, itinerary, available } = safariPackage;
+
+  console.log(name, duration, fromDate, toDate, nationalParkId, itinerary, available);  // Debugging: log the incoming request data
+
+  try {
+    // Insert the safari package into the safari_packages table
+    const [safariPackageResult] = await connection.promise().query<ResultSetHeader>(
+      'INSERT INTO safari_packages (name, duration, from_date, to_date, national_park_id, available) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, duration, fromDate, toDate, nationalParkId, available]
+    );
+
+    const safariPackageId = safariPackageResult.insertId;
+
+    console.log('Safari package inserted, ID:', safariPackageId); // Debugging: log the insert ID
+
+    // Insert the itinerary and associated data into the itinerary, activities, and accommodations tables
+    for (const day of itinerary) {
+      const [itineraryResult] = await connection.promise().query<ResultSetHeader>(
+        'INSERT INTO itinerary (safari_package_id, day, date, description) VALUES (?, ?, ?, ?)',
+        [safariPackageId, day.day, day.date, day.description]
+      );
+
+      const itineraryId = itineraryResult.insertId;
+
+      // Insert activities for this day
+      for (const activity of day.activities.split(',')) {
+        console.log('Activity:', activity);
+        await connection.promise().query(
+          'INSERT INTO activities (itinerary_id, activity) VALUES (?, ?)',
+          [itineraryId, activity]
+        );
+      }
+
+      // Insert accommodations for this day
+      for (const accommodation of day.accommodation) {
+        const [accommodationResult] = await connection.promise().query<ResultSetHeader>(
+          'INSERT INTO accommodations (itinerary_id, name, rating, link, image_url) VALUES (?, ?, ?, ?, ?)',
+          [
+            itineraryId,
+            accommodation.name,
+            accommodation.rating,
+            accommodation.link,
+            accommodation.imageUrl
+          ]
+        );
+
+        const accommodationId = accommodationResult.insertId;
+
+        // Insert meals for this accomodation
+        for (const meal of accommodation.meals.split(',')) {
+          await connection.promise().query(
+            'INSERT INTO meals (itinerary_id, accommodation_id, type) VALUES (?, ?, ?)',
+            [
+              itineraryId,
+              accommodationId,
+              meal
+            ]
+          );
+        }
+
+        // Insert room types for this accomodation
+        for (const roomType of accommodation.roomTypes.split(',')) {
+          await connection.promise().query(
+            'INSERT INTO room_types (itinerary_id, accommodation_id, type) VALUES (?, ?, ?)',
+            [
+              itineraryId,
+              accommodationId,
+              roomType
+            ]
+          );
+        }
+      }
+    }
+
+    return NextResponse.json({ message: 'Safari package created successfully' });
+  } catch (error) {
+    console.error('Error inserting safari package:', error);
+    return NextResponse.json({ error: 'Internal Server Error' });
+  }
+};
