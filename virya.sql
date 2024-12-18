@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 17, 2024 at 07:32 PM
+-- Generation Time: Dec 18, 2024 at 06:19 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -126,9 +126,17 @@ CREATE TABLE `national_parks` (
   `image` varchar(255) NOT NULL,
   `month` varchar(255) NOT NULL,
   `river` varchar(255) NOT NULL,
-  `seaon` varchar(255) NOT NULL,
+  `season` varchar(255) NOT NULL,
   `state` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `national_parks`
+--
+
+INSERT INTO `national_parks` (`id`, `name`, `location`, `description`, `image`, `month`, `river`, `season`, `state`) VALUES
+(1, 'Gir', 'Gujarat', 'injsncjsbcvcgvcg', 'credit_card.png', 'January', 'Gir', 'Winter', 'Gujarat'),
+(12, 'Kanha National Park', 'MP', 'shchjvcgvstvc', 'FB_DB_holiday_packages_1.png', 'Feb', 'Kanha', 'Winter', 'Mah');
 
 -- --------------------------------------------------------
 
@@ -163,7 +171,7 @@ INSERT INTO `room_types` (`id`, `accommodation_id`, `itinerary_id`, `type`) VALU
 CREATE TABLE `safari_packages` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `duration` int(11) DEFAULT NULL,
+  `duration` varchar(191) DEFAULT NULL,
   `from_date` date DEFAULT NULL,
   `to_date` date DEFAULT NULL,
   `national_park_id` int(11) DEFAULT NULL,
@@ -175,7 +183,7 @@ CREATE TABLE `safari_packages` (
 --
 
 INSERT INTO `safari_packages` (`id`, `name`, `duration`, `from_date`, `to_date`, `national_park_id`, `available`) VALUES
-(1, 'Gir Adventures Safari', 2, '2024-12-17', '2024-12-18', 1, 1);
+(1, 'Gir Adventures Safari', '2 Days', '2024-12-17', '2024-12-18', 1, 1);
 
 --
 -- Indexes for dumped tables
@@ -262,7 +270,7 @@ ALTER TABLE `meals`
 -- AUTO_INCREMENT for table `national_parks`
 --
 ALTER TABLE `national_parks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `room_types`
