@@ -1,12 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { redirect } from 'next/navigation';
 
-const nationalParks = [
-  { id: '1', name: 'Gir National Park' },
-  { id: '2', name: 'Serengeti National Park' },
-  { id: '3', name: 'Kruger National Park' },
-];
+// const nationalParks = [
+//   { id: '1', name: 'Gir National Park' },
+//   { id: '2', name: 'Serengeti National Park' },
+//   { id: '3', name: 'Kruger National Park' },
+// ];
 
 const SafariPackageFrom = () => {
   const [safariPackage, setSafariPackage] = useState({
@@ -55,6 +55,23 @@ const SafariPackageFrom = () => {
       });
     }
   };
+
+  const [nationalParks, setNationalParks] = useState([]);
+
+  // Fetch data from API
+     useEffect(() => {
+      const fetchData = async () => {
+      try {
+        const response = await fetch("/api/nationalPark"); // Replace with your API endpoint
+        const result = await response.json();
+        setNationalParks(result); // Update data state with fetched data
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
+  }, []); // Empty dependency array ensures this runs once
 
   const handleAccommodationChange = (e, dayIndex, accommodationIndex, field) => {
     const { name, value } = e.target;
@@ -140,6 +157,7 @@ const SafariPackageFrom = () => {
   
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('folder', 'safariPackages');
   
     try {
       // Send the file to the backend API route
@@ -435,7 +453,7 @@ const SafariPackageFrom = () => {
                     className="mb-4.5 w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
                   />
                   {/* <br/><br/> */}
-                  {accommodation.imageUrl && <img src={`/uploads/${accommodation.imageUrl}`} width={200} alt="Accommodation" />}
+                  {accommodation.imageUrl && <img src={`/uploads/safariPackages/${accommodation.imageUrl}`} width={200} alt="Accommodation" />}
                 </div>
 
                 <button type="button" className="w-50 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveAccommodation(index, accIndex)}>

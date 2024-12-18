@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-const UPLOAD_DIR = path.resolve(process.env.ROOT_PATH ?? "", "public/uploads");
-
 export const POST = async (req) => {
   const formData = await req.formData();
   const body = Object.fromEntries(formData);
   const file = (body.file) || null;
+
+  const UPLOAD_DIR = path.resolve(process.env.ROOT_PATH ?? "", `public/uploads/${body.folder}`);
 
   if (file) {
     const buffer = Buffer.from(await file.arrayBuffer());

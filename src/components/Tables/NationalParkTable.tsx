@@ -19,7 +19,7 @@ const DataTablePage = () => {
    useEffect(() => {
     const fetchData = async () => {
     try {
-      const response = await fetch("/api/safariPackage"); // Replace with your API endpoint
+      const response = await fetch("/api/nationalPark"); // Replace with your API endpoint
       const result = await response.json();
       setData(result); // Update data state with fetched data
       setFilteredData(result); // Initialize filteredData with fetched data
@@ -55,10 +55,12 @@ const DataTablePage = () => {
     const filtered = data.filter(
       (row) =>
         row.name.toLowerCase().includes(value) ||
-        row.duration.toString().includes(value) ||
-        row.from_date.toLowerCase().includes(value) ||
-        row.to_date.toLowerCase().includes(value) ||
-        row.national_park.toLowerCase().includes(value)
+        row.location.toString().includes(value) ||
+        row.description.toLowerCase().includes(value) ||
+        row.month.toLowerCase().includes(value) ||
+        row.river.toLowerCase().includes(value) ||
+        row.season.toLowerCase().includes(value) ||
+        row.state.toLowerCase().includes(value)
     );
     setFilteredData(filtered);
   };
@@ -71,28 +73,45 @@ const DataTablePage = () => {
       sortable: true,
     },
     {
-      name: "Duration",
-      selector: (row) => row.duration,
+      name: "Location",
+      selector: (row) => row.location,
       sortable: true,
     },
     {
-      name: "From Date",
-      selector: (row) => row.from_date,
+      name: "Description",
+      selector: (row) => row.description,
       sortable: true,
     },
     {
-      name: "To Date",
-      selector: (row) => row.to_date,
+      name: "Image",
+      selector: (row) => row.image,
+      cell: (row) => (
+        <img
+          src={`/uploads/nationalParks/${row.image}`}
+          alt='Safari Package' // Use a meaningful alt text
+          className="h-16 w-16 rounded object-cover" // Adjust size and styling as needed
+        />
+      ),
       sortable: true,
     },
     {
-      name: "National Park",
-      selector: (row) => row.national_park,
+      name: "Month",
+      selector: (row) => row.month,
       sortable: true,
     },
     {
-      name: "Available",
-      selector: (row) => row.available == 1 ? "Available" : "Not Available",
+      name: "River",
+      selector: (row) => row.river,
+      sortable: true,
+    },
+    {
+      name: "Season",
+      selector: (row) => row.season,
+      sortable: true,
+    },
+    {
+      name: "State",
+      selector: (row) => row.state,
       sortable: true,
     },
     {
@@ -142,7 +161,7 @@ const DataTablePage = () => {
       <div className="max-w-full overflow-x-auto">
         <div className="w-full table-auto">
           <DataTable
-            title="Safari Package Information"
+            title="National Park Information"
             columns={columns}
             data={filteredData}
             pagination

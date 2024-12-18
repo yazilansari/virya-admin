@@ -113,3 +113,13 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     return NextResponse.json({ error: 'Internal Server Error' });
   }
 };
+
+export const GET = async (req: NextRequest, res: NextResponse) => {
+  try {
+    const [rows] = await connection.promise().query('SELECT safari_packages.id, safari_packages.name, safari_packages.duration, safari_packages.from_date, safari_packages.to_date, national_parks.name as national_park, safari_packages.available FROM safari_packages LEFT JOIN national_parks ON safari_packages.national_park_id = national_parks.id ORDER BY safari_packages.id DESC'); // Replace `your_table_name` with your table
+    return NextResponse.json(rows);
+  } catch (error) {
+    console.error('Database query error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' });
+  }
+};
