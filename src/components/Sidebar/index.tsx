@@ -158,11 +158,11 @@ const menuGroups = [
             </defs>
           </svg>
         ),
-        label: "Safari Packages",
+        label: "National Parks",
         route: "#",
         children: [
-          { label: "List Packages", route: "/safari-packages" },
-          { label: "Add Package", route: "/safari-packages/add" },
+          { label: "List Parks", route: "/national-parks" },
+          { label: "Add Park", route: "/national-parks/add" },
         ],
       },
       {
@@ -193,11 +193,11 @@ const menuGroups = [
             </defs>
           </svg>
         ),
-        label: "National Parks",
+        label: "Safari Packages",
         route: "#",
         children: [
-          { label: "List Parks", route: "/national-parks" },
-          { label: "Add Park", route: "/national-parks/add" },
+          { label: "List Packages", route: "/safari-packages" },
+          { label: "Add Package", route: "/safari-packages/add" },
         ],
       },
       // {

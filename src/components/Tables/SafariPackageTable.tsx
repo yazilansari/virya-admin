@@ -2,56 +2,93 @@
 import React, { useState, useEffect } from "react";
 import DataTable from "react-data-table-component";
 
-// Sample data
-// const data = [
-//   { id: 1, name: "John Doe", age: 28, email: "john@example.com" },
-//   { id: 2, name: "Jane Smith", age: 34, email: "jane@example.com" },
-//   { id: 3, name: "Sam Green", age: 22, email: "sam@example.com" },
-//   { id: 4, name: "Alex Brown", age: 25, email: "alex@example.com" },
-// ];
+// Modal component for showing extra data
+const Modal = ({ isOpen, onClose, data, isLoading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg p-6 w-1/2">
+        {isLoading ? (
+          <div className="text-center">
+            <p className="text-lg font-semibold">Loading...</p>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold mb-4">Package Details</h2>
+            <table className="table-auto w-full border">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border px-4 py-2">Field</th>
+                  <th className="border px-4 py-2">Value</th>
+                </tr>
+              </thead>
+              <tbody>{ JSON.stringify(data) }
+                {/* {data &&
+                  data.map((value, key) => (
+                    <tr key={key}>
+                      <td className="border px-4 py-2">{value}</td>
+                    </tr>
+                  ))} */}
+              </tbody>
+            </table>
+            <button
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const DataTablePage = () => {
-  const [data, setData] = useState([]); // State for fetched data
-  const [filterText, setFilterText] = useState(""); // State for search input
-  const [filteredData, setFilteredData] = useState(data); // State for filtered data
+  const [data, setData] = useState([]);
+  const [filterText, setFilterText] = useState("");
+  const [filteredData, setFilteredData] = useState(data);
+  const [selectedRowData, setSelectedRowData] = useState({}); // Data for the modal
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isLoading, setLoading] = useState(false); // Loading state for the modal
 
-   // Fetch data from API
-   useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
+      try {
+        const response = await fetch("/api/safariPackage");
+        const result = await response.json();
+        setData(result);
+        setFilteredData(result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleView = async (row) => {
+    setModalOpen(true);
+    setLoading(true);
+
     try {
-      const response = await fetch("/api/safariPackage"); // Replace with your API endpoint
+      // Fetch additional details using the row's ID
+      const response = await fetch(`/api/safariPackage/${row.id}`);
       const result = await response.json();
-      setData(result); // Update data state with fetched data
-      setFilteredData(result); // Initialize filteredData with fetched data
+      console.log(result);
+      setSelectedRowData(result); // Set the fetched data for the modal
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching row details:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  fetchData();
-}, []); // Empty dependency array ensures this runs once
-
-  // Handlers for actions
-  const handleView = (row) => {
-    alert(`Viewing details of ${row.name}`);
-  };
-
-  const handleEdit = (row) => {
-    alert(`Editing details of ${row.name}`);
-  };
-
-  const handleDelete = (row) => {
-    if (confirm(`Are you sure you want to delete ${row.name}?`)) {
-      setFilteredData((prevData) => prevData.filter((item) => item.id !== row.id));
-    }
-  };
-
-  // Handle search input change
   const handleSearch = (event) => {
     const value = event.target.value.toLowerCase();
     setFilterText(value);
 
-    // Filter data based on the input text
     const filtered = data.filter(
       (row) =>
         row.name.toLowerCase().includes(value) ||
@@ -63,7 +100,6 @@ const DataTablePage = () => {
     setFilteredData(filtered);
   };
 
-  // Define columns for the table
   const columns = [
     {
       name: "Name",
@@ -92,66 +128,56 @@ const DataTablePage = () => {
     },
     {
       name: "Available",
-      selector: (row) => row.available == 1 ? "Available" : "Not Available",
+      selector: (row) => (row.available == 1 ? "Available" : "Not Available"),
       sortable: true,
     },
     {
       name: "Actions",
       cell: (row) => (
-        <div className="">
+        <div>
           <button
             className="inline-flex items-center justify-center rounded-full bg-black px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
-            onClick={() => handleView(row)} // Inline function to call handleView
+            onClick={() => handleView(row)}
           >
             View
           </button>
-
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
-            onClick={() => handleEdit(row)} // Inline function to call handleEdit
-          >
-            Edit
-          </button>
-
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
-            onClick={() => handleDelete(row)} // Inline function to call handleDelete
-          >
-            Delete
-          </button>
         </div>
       ),
-      ignoreRowClick: true, // Prevent triggering row click event
+      ignoreRowClick: true,
     },
   ];
 
   return (
     <>
-      {/* Search Input */}
-      <div className="w-full xl:w-1/2">
+      <div className="w-full xl:w-1/2 mb-4">
         <input
           type="text"
           placeholder="Search..."
           value={filterText}
           onChange={handleSearch}
-          className="w-50 rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary"
         />
       </div>
 
-      {/* Data Table */}
       <div className="max-w-full overflow-x-auto">
-        <div className="w-full table-auto">
-          <DataTable
-            title="Safari Package Information"
-            columns={columns}
-            data={filteredData}
-            pagination
-            paginationRowsPerPageOptions={[10, 30, 50, 100, 500]}
-            highlightOnHover
-            striped
-          />
-        </div>
+        <DataTable
+          title="Safari Package Information"
+          columns={columns}
+          data={filteredData}
+          pagination
+          paginationRowsPerPageOptions={[10, 30, 50, 100, 500]}
+          highlightOnHover
+          striped
+        />
       </div>
+
+      {/* Modal for extra data */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        data={selectedRowData}
+        isLoading={isLoading}
+      />
     </>
   );
 };
