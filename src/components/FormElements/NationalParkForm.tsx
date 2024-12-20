@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { redirect } from 'next/navigation';
+// import { redirect } from 'next/navigation';
 
 // const nationalParks = [
 //   { id: '1', name: 'Gir National Park' },
@@ -75,8 +75,8 @@ const nationalParkFrom = () => {
     const data = await response.json();
     console.log(data);
     if(data.message && data.message == 'National park created successfully') {
-        // window.location.href='/national-parks';
-        redirect('/national-parks');
+        window.location.href='/national-parks';
+        // redirect('/national-parks');
     }
   };
 

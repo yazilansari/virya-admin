@@ -8,30 +8,66 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-1/2">
+      <div className="bg-white rounded-lg p-6 w-1/2 max-h-[90vh] overflow-y-auto">
         {isLoading ? (
           <div className="text-center">
             <p className="text-lg font-semibold">Loading...</p>
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-bold mb-4">Package Details</h2>
-            <table className="table-auto w-full border">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border px-4 py-2">Field</th>
-                  <th className="border px-4 py-2">Value</th>
-                </tr>
-              </thead>
-              <tbody>{ JSON.stringify(data) }
-                {/* {data &&
-                  data.map((value, key) => (
-                    <tr key={key}>
-                      <td className="border px-4 py-2">{value}</td>
-                    </tr>
-                  ))} */}
-              </tbody>
-            </table>
+            <h2 className="text-xl font-bold mb-5">Package Details</h2>
+            {data &&
+              data.map((value, key) => (
+                <div key={key}>
+                  <h2 className="text-md font-bold mb-1">Day <span className="text-sm font-bold">{value.day}</span>: <span className="text-sm font-bold">{value.date.split("T")[0]}</span></h2>
+                  <h2 className="text-md font-bold mb-1">Description: <span className="text-sm font-bold">{value.description}</span></h2>
+                  <table className="border border-gray-400 border-collapse overflow-x-auto">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="border border-gray-400 px-4 py-2">#</th>
+                        <th className="border border-gray-400 px-4 py-2">Activity:</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        value.activities.map((val, k) => (
+                          <tr key={k} className="border-b">
+                            <td className="border border-gray-400 px-4 py-2">{k + 1}</td>
+                            <td className="border border-gray-400 px-4 py-2">{val.activity}</td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                  <h2 className="text-md font-bold mb-1">Accommodations:</h2>
+                    <table className="w-full border border-gray-400 border-collapse mb-5 overflow-x-auto">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="border border-gray-400 px-4 py-2">Hotel Name</th>
+                          <th className="border border-gray-400 px-4 py-2">Rating</th>
+                          <th className="border border-gray-400 px-4 py-2">Website</th>
+                          <th className="border border-gray-400 px-4 py-2">Meals</th>
+                          <th className="border border-gray-400 px-4 py-2">Room Types</th>
+                          <th className="border border-gray-400 px-4 py-2">Image</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {
+                          value.accommodations.map((v, i) => (
+                            <tr key={i} className="border-b">
+                              <td className="border border-gray-400 px-4 py-2">{v.name}</td>
+                              <td className="border border-gray-400 px-4 py-2">{v.rating}</td>
+                              <td className="border border-gray-400 px-4 py-2"><a href={v.link} target="_blank">Visit</a></td>
+                              <td className="border border-gray-400 px-4 py-2">{v.meals.map((va, ind) => <p key={ind}>{va.type}</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2">{v.room_types.map((valu, index) => <p key={index}>{valu.type}</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2"><a href={`/uploads/safariPackages/${v.image_url}`} target="_blank"><img src={`/uploads/safariPackages/${v.image_url}`} alt={v.hotelName} height={100} width={100}/></a></td>
+                            </tr>
+                          ))
+                        }
+                      </tbody>
+                    </table>
+                </div>
+              ))}
             <button
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
               onClick={onClose}
@@ -85,6 +121,33 @@ const DataTablePage = () => {
     }
   };
 
+  const handleEdit = (row) => {
+    alert(`Editing details of ${row.name}`);
+  };
+
+  const handleDelete = async(row) => {
+    if (confirm(`Are you sure you want to delete ${row.name}?`)) {
+      try {
+        // Fetch additional details using the row's ID
+        const response = await fetch(`/api/safariPackage/${row.id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          alert("Record deleted successfully!");
+          // Optionally, update the UI to reflect the deletion
+          setData((prevData) => prevData.filter((item) => item.id !== row.id));
+          setFilteredData((prevData) => prevData.filter((item) => item.id !== row.id));
+        } else {
+          const error = await response.json();
+          alert(`Failed to delete: ${error.message}`);
+        }
+      } catch (error) {
+        console.error("Error fetching row details:", error);
+        alert("An error occurred while deleting the record.");
+      }
+    }
+  };
+
   const handleSearch = (event) => {
     const value = event.target.value.toLowerCase();
     setFilterText(value);
@@ -113,12 +176,12 @@ const DataTablePage = () => {
     },
     {
       name: "From Date",
-      selector: (row) => row.from_date,
+      selector: (row) => row.from_date.split("T")[0],
       sortable: true,
     },
     {
       name: "To Date",
-      selector: (row) => row.to_date,
+      selector: (row) => row.to_date.split("T")[0],
       sortable: true,
     },
     {
@@ -141,6 +204,20 @@ const DataTablePage = () => {
           >
             View
           </button>
+
+          <button
+            className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
+            onClick={() => handleEdit(row)} // Inline function to call handleEdit
+          >
+            Edit
+          </button>
+
+          <button
+            className="inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
+            onClick={() => handleDelete(row)} // Inline function to call handleDelete
+          >
+            Delete
+          </button>
         </div>
       ),
       ignoreRowClick: true,
@@ -155,7 +232,7 @@ const DataTablePage = () => {
           placeholder="Search..."
           value={filterText}
           onChange={handleSearch}
-          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary"
+          className="w-50 rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary"
         />
       </div>
 

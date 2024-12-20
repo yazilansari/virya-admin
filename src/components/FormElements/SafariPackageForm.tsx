@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { redirect } from 'next/navigation';
+// import { redirect } from 'next/navigation';
 
 // const nationalParks = [
 //   { id: '1', name: 'Gir National Park' },
@@ -200,8 +200,8 @@ const SafariPackageFrom = () => {
     const data = await response.json();
     console.log(data);
     if(data.message && data.message == 'Safari package created successfully') {
-        // window.location.href='/safari-packages';
-        redirect('/safari-packages');
+        window.location.href='/safari-packages';
+        // redirect('/safari-packages');
     }
   };
 

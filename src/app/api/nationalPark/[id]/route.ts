@@ -66,21 +66,14 @@ export const DELETE = async (req: NextRequest, { params }: { params: { id: strin
   const { id } = params;
 
   try {
-    // Delete child records first
-    connection.query("DELETE FROM room_types WHERE safari_package_id = ?", [id]);
-    connection.query("DELETE FROM meals WHERE safari_package_id = ?", [id]);
-    connection.query("DELETE FROM accommodations WHERE safari_package_id = ?", [id]);
-    connection.query("DELETE FROM activities WHERE safari_package_id = ?", [id]);
-    connection.query("DELETE FROM itineraries WHERE safari_package_id = ?", [id]);
-
     // Now delete the parent record
-    const [safariPackageResult] = await connection.promise().query<ResultSetHeader>(
-      "DELETE FROM safari_packages WHERE id = ?",
+    const [nationalParkResult] = await connection.promise().query<ResultSetHeader>(
+      "DELETE FROM national_parks WHERE id = ?",
       [id]
     );
 
     // Check if a row was deleted
-    if (safariPackageResult.affectedRows > 0) {
+    if (nationalParkResult.affectedRows > 0) {
       return NextResponse.json(
         { message: "Record deleted successfully" },
         { status: 200 }

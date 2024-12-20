@@ -51,7 +51,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     // Insert the itinerary and associated data into the itinerary, activities, and accommodations tables
     for (const day of itinerary) {
       const [itineraryResult] = await connection.promise().query<ResultSetHeader>(
-        'INSERT INTO itinerary (safari_package_id, day, date, description) VALUES (?, ?, ?, ?)',
+        'INSERT INTO itineraries (safari_package_id, day, date, description) VALUES (?, ?, ?, ?)',
         [safariPackageId, day.day, day.date, day.description]
       );
 
@@ -61,16 +61,17 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       for (const activity of day.activities.split(',')) {
         console.log('Activity:', activity);
         await connection.promise().query(
-          'INSERT INTO activities (itinerary_id, activity) VALUES (?, ?)',
-          [itineraryId, activity]
+          'INSERT INTO activities (safari_package_id, itinerary_id, activity) VALUES (?, ?, ?)',
+          [safariPackageId, itineraryId, activity]
         );
       }
 
       // Insert accommodations for this day
       for (const accommodation of day.accommodation) {
         const [accommodationResult] = await connection.promise().query<ResultSetHeader>(
-          'INSERT INTO accommodations (itinerary_id, name, rating, link, image_url) VALUES (?, ?, ?, ?, ?)',
+          'INSERT INTO accommodations (safari_package_id, itinerary_id, name, rating, link, image_url) VALUES (?, ?, ?, ?, ?, ?)',
           [
+            safariPackageId,
             itineraryId,
             accommodation.name,
             accommodation.rating,
@@ -84,8 +85,9 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
         // Insert meals for this accomodation
         for (const meal of accommodation.meals.split(',')) {
           await connection.promise().query(
-            'INSERT INTO meals (itinerary_id, accommodation_id, type) VALUES (?, ?, ?)',
+            'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
             [
+              safariPackageId,
               itineraryId,
               accommodationId,
               meal
@@ -96,8 +98,9 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
         // Insert room types for this accomodation
         for (const roomType of accommodation.roomTypes.split(',')) {
           await connection.promise().query(
-            'INSERT INTO room_types (itinerary_id, accommodation_id, type) VALUES (?, ?, ?)',
+            'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
             [
+              safariPackageId,
               itineraryId,
               accommodationId,
               roomType

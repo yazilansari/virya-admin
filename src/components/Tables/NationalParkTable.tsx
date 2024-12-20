@@ -32,17 +32,30 @@ const DataTablePage = () => {
 }, []); // Empty dependency array ensures this runs once
 
   // Handlers for actions
-  const handleView = (row) => {
-    alert(`Viewing details of ${row.name}`);
-  };
-
   const handleEdit = (row) => {
     alert(`Editing details of ${row.name}`);
   };
 
-  const handleDelete = (row) => {
+  const handleDelete = async(row) => {
     if (confirm(`Are you sure you want to delete ${row.name}?`)) {
-      setFilteredData((prevData) => prevData.filter((item) => item.id !== row.id));
+      try {
+        // Fetch additional details using the row's ID
+        const response = await fetch(`/api/nationalPark/${row.id}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          alert("Record deleted successfully!");
+          // Optionally, update the UI to reflect the deletion
+          setData((prevData) => prevData.filter((item) => item.id !== row.id));
+          setFilteredData((prevData) => prevData.filter((item) => item.id !== row.id));
+        } else {
+          const error = await response.json();
+          alert(`Failed to delete: ${error.message}`);
+        }
+      } catch (error) {
+        console.error("Error fetching row details:", error);
+        alert("An error occurred while deleting the record.");
+      }
     }
   };
 
@@ -118,13 +131,6 @@ const DataTablePage = () => {
       name: "Actions",
       cell: (row) => (
         <div className="">
-          <button
-            className="inline-flex items-center justify-center rounded-full bg-black px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
-            onClick={() => handleView(row)} // Inline function to call handleView
-          >
-            View
-          </button>
-
           <button
             className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90"
             onClick={() => handleEdit(row)} // Inline function to call handleEdit
