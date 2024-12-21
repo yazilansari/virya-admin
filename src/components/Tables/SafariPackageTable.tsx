@@ -8,16 +8,20 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 w-1/2 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-1/2 max-h-[80vh] overflow-y-auto">
         {isLoading ? (
           <div className="text-center">
             <p className="text-lg font-semibold">Loading...</p>
           </div>
         ) : (
           <>
+            {/* Close Button */}
+            <button className="float-right bg-transparent border-none text-2xl cursor-pointer text-black hover:text-red-500" onClick={onClose}>
+              &times;
+            </button>
             <h2 className="text-xl font-bold mb-5">Package Details</h2>
             {data &&
-              data.map((value, key) => (
+              data.itinerary.map((value, key) => (
                 <div key={key}>
                   <h2 className="text-md font-bold mb-1">Day <span className="text-sm font-bold">{value.day}</span>: <span className="text-sm font-bold">{value.date.split("T")[0]}</span></h2>
                   <h2 className="text-md font-bold mb-1">Description: <span className="text-sm font-bold">{value.description}</span></h2>
@@ -33,7 +37,7 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
                         value.activities.map((val, k) => (
                           <tr key={k} className="border-b">
                             <td className="border border-gray-400 px-4 py-2">{k + 1}</td>
-                            <td className="border border-gray-400 px-4 py-2">{val.activity}</td>
+                            <td className="border border-gray-400 px-4 py-2">{val}</td>
                           </tr>
                         ))
                       }
@@ -53,14 +57,14 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
                       </thead>
                       <tbody>
                         {
-                          value.accommodations.map((v, i) => (
+                          value.accommodation.map((v, i) => (
                             <tr key={i} className="border-b">
                               <td className="border border-gray-400 px-4 py-2">{v.name}</td>
                               <td className="border border-gray-400 px-4 py-2">{v.rating}</td>
-                              <td className="border border-gray-400 px-4 py-2"><a href={v.link} target="_blank">Visit</a></td>
-                              <td className="border border-gray-400 px-4 py-2">{v.meals.map((va, ind) => <p key={ind}>{va.type}</p>) }</td>
-                              <td className="border border-gray-400 px-4 py-2">{v.room_types.map((valu, index) => <p key={index}>{valu.type}</p>) }</td>
-                              <td className="border border-gray-400 px-4 py-2"><a href={`/uploads/safariPackages/${v.image_url}`} target="_blank"><img src={`/uploads/safariPackages/${v.image_url}`} alt={v.hotelName} height={100} width={100}/></a></td>
+                              <td className="border border-gray-400 px-4 py-2"><a className="text-blue-600" href={v.link} target="_blank">Visit</a></td>
+                              <td className="border border-gray-400 px-4 py-2">{v.meals.map((va, ind) => <p key={ind}>{va},</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2">{v.roomTypes.map((valu, index) => <p key={index}>{valu},</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2"><a href={`/uploads/safariPackages/${v.imageUrl}`} download={v.imageUrl}><img src={`/uploads/safariPackages/${v.imageUrl}`} alt={v.hotelName} height={100} width={100}/></a></td>
                             </tr>
                           ))
                         }
@@ -68,12 +72,12 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
                     </table>
                 </div>
               ))}
-            <button
+            {/* <button
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
               onClick={onClose}
             >
               Close
-            </button>
+            </button> */}
           </>
         )}
       </div>
@@ -122,7 +126,7 @@ const DataTablePage = () => {
   };
 
   const handleEdit = (row) => {
-    alert(`Editing details of ${row.name}`);
+    window.location.href = '/safari-packages/edit/' + row.id;
   };
 
   const handleDelete = async(row) => {

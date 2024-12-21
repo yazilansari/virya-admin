@@ -12,50 +12,61 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
       [id]
     );
 
-    // For each itinerary, fetch its associated activities and accommodations concurrently
-    const itinerariesWithDetails = await Promise.all(itineraries.map(async (itinerary) => {
-      // Fetch activities
-      const [activities] = await connection.promise().query(
-        'SELECT activity FROM activities WHERE itinerary_id = ?',
-        [itinerary.id]
-      );
-
-      // Fetch accommodations
-      const [accommodations] = await connection.promise().query(
-        'SELECT id, name, rating, link, image_url FROM accommodations WHERE itinerary_id = ?',
-        [itinerary.id]
-      );
-
-      // For each accommodation, fetch multiple meals and room types
-      const accommodationsWithDetails = await Promise.all(accommodations.map(async (accommodation) => {
-        // Fetch meals for the accommodation
-        const [meals] = await connection.promise().query(
-          'SELECT type FROM meals WHERE accommodation_id = ?',
-          [accommodation.id]
+    // Process itineraries
+    const formattedItineraries = await Promise.all(
+      itineraries.map(async (itinerary: any) => {
+        // Fetch activities
+        const [activities] = await connection.promise().query(
+          'SELECT activity FROM activities WHERE itinerary_id = ?',
+          [itinerary.id]
         );
 
-        // Fetch room types for the accommodation
-        const [roomTypes] = await connection.promise().query(
-          'SELECT type FROM room_types WHERE accommodation_id = ?',
-          [accommodation.id]
+        // Fetch accommodations
+        const [accommodations] = await connection.promise().query(
+          'SELECT id, name, rating, link, image_url FROM accommodations WHERE itinerary_id = ?',
+          [itinerary.id]
         );
 
-        // Add meals and room types to accommodation
-        accommodation.meals = meals;
-        accommodation.room_types = roomTypes;
+        // Add detailed data for accommodations
+        const formattedAccommodations = await Promise.all(
+          accommodations.map(async (accommodation: any) => {
+            // Fetch meals
+            const [meals] = await connection.promise().query(
+              'SELECT type FROM meals WHERE accommodation_id = ?',
+              [accommodation.id]
+            );
 
-        return accommodation;
-      }));
+            // Fetch room types
+            const [roomTypes] = await connection.promise().query(
+              'SELECT type FROM room_types WHERE accommodation_id = ?',
+              [accommodation.id]
+            );
 
-      // Add activities and accommodations with details to the itinerary
-      itinerary.activities = activities;
-      itinerary.accommodations = accommodationsWithDetails;
+            // Return formatted accommodation
+            return {
+              name: accommodation.name,
+              rating: accommodation.rating,
+              link: accommodation.link,
+              meals: meals.map((meal: any) => meal.type),
+              roomTypes: roomTypes.map((roomType: any) => roomType.type),
+              imageUrl: accommodation.image_url,
+            };
+          })
+        );
 
-      return itinerary;
-    }));
+        // Return formatted itinerary
+        return {
+          day: itinerary.day,
+          date: itinerary.date,
+          description: itinerary.description,
+          activities: activities.map((activity: any) => activity.activity),
+          accommodation: formattedAccommodations,
+        };
+      })
+    );
 
-    // Return the updated itineraries with their activities and accommodations
-    return NextResponse.json(itinerariesWithDetails);
+    // Return the formatted itineraries
+    return NextResponse.json({ itinerary: formattedItineraries });
   } catch (error) {
     console.error('Database query error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

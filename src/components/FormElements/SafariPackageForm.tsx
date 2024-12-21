@@ -7,8 +7,11 @@ import { useState, useEffect } from 'react';
 //   { id: '2', name: 'Serengeti National Park' },
 //   { id: '3', name: 'Kruger National Park' },
 // ];
+interface SafariPackageFromProps {
+  id: string;
+}
 
-const SafariPackageFrom = () => {
+const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
   const [safariPackage, setSafariPackage] = useState({
     name: '',
     duration: '',
@@ -28,6 +31,17 @@ const SafariPackageFrom = () => {
     ],
     available: true,
   });
+
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/safariPackage/${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          setSafariPackage(data);
+        });
+    }
+  }, []);
 
   const handleInputChange = (e, index = null, field = null, activityIndex = null) => {
     const { name, value } = e.target;
@@ -233,7 +247,7 @@ const SafariPackageFrom = () => {
       {/* <h1>Create Safari Package</h1> */}
       <form onSubmit={handleSubmit}>
         {/* Safari Package Name */}
-        <div className="mb-4.5">
+        {!id && <div className="mb-4.5">
           <label htmlFor="name" className="mb-3 block text-sm font-medium text-black dark:text-white">Safari Name</label>
           <input
             type="text"
@@ -245,10 +259,10 @@ const SafariPackageFrom = () => {
             placeholder='Safari Name'
             className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
           />
-        </div>
+        </div>}
 
         {/* Duration */}
-        <div className="mb-4.5">
+        {!id && <div className="mb-4.5">
           <label htmlFor="duration" className="mb-3 block text-sm font-medium text-black dark:text-white">Duration</label>
           <input
             type="text"
@@ -260,10 +274,10 @@ const SafariPackageFrom = () => {
             placeholder='Duration'
             className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
           />
-        </div>
+        </div>}
 
         {/* From Date */}
-        <div className="mb-4.5">
+        {!id && <div className="mb-4.5">
           <label htmlFor="fromDate" className="mb-3 block text-sm font-medium text-black dark:text-white">From Date</label>
           <input
             type="date"
@@ -275,10 +289,10 @@ const SafariPackageFrom = () => {
             placeholder='From Date'
             className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
           />
-        </div>
+        </div>}
 
         {/* To Date */}
-        <div className="mb-4.5">
+        {!id && <div className="mb-4.5">
           <label htmlFor="toDate" className="mb-3 block text-sm font-medium text-black dark:text-white">To Date</label>
           <input
             type="date"
@@ -290,10 +304,10 @@ const SafariPackageFrom = () => {
             placeholder='To Date'
             className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
           />
-        </div>
+        </div>}
 
         {/* National Park */}
-        <div className="mb-4.5">
+        {!id && <div className="mb-4.5">
           <label htmlFor="nationalParkId" className="mb-3 block text-sm font-medium text-black dark:text-white">National Park</label>
           <select
             id="nationalParkId"
@@ -310,13 +324,13 @@ const SafariPackageFrom = () => {
               </option>
             ))}
           </select>
-        </div>
+        </div>}
 
         {/* Itinerary */}
         {safariPackage.itinerary.map((day, index) => (
           <div key={index} className="mb-4.5 flex flex-col gap-2">
             <h3 className="mb-3 block text-xl font-bold text-black dark:text-white">Day {day.day}</h3>
-            <div>
+            {!id && <div>
               <label htmlFor={`date${index}`} className="mb-3 block text-sm font-medium text-black dark:text-white">Date</label>
               <input
                 type="date"
@@ -328,7 +342,7 @@ const SafariPackageFrom = () => {
                 placeholder='Date'
                 className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
               />
-            </div>
+            </div>}
 
             <div>
               <label htmlFor={`description${index}`} className="mb-3 block text-sm font-medium text-black dark:text-white">Description</label>
@@ -453,7 +467,7 @@ const SafariPackageFrom = () => {
                     className="mb-4.5 w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
                   />
                   {/* <br/><br/> */}
-                  {accommodation.imageUrl && <img src={`/uploads/safariPackages/${accommodation.imageUrl}`} width={200} alt="Accommodation" />}
+                  {accommodation.imageUrl && <a href={`/uploads/safariPackages/${accommodation.imageUrl}`} download={accommodation.imageUrl}><img src={`/uploads/safariPackages/${accommodation.imageUrl}`} width={200} alt="Accommodation" /></a>}
                 </div>
 
                 <button type="button" className="w-50 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveAccommodation(index, accIndex)}>

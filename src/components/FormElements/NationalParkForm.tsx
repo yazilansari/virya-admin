@@ -9,7 +9,7 @@ import { useState } from 'react';
 // ];
 
 const nationalParkFrom = () => {
-  const [nationalPark, setnationalPark] = useState({
+  const [nationalPark, setNationalPark] = useState({
     name: '',
     location: '',
     description: '',
@@ -22,7 +22,7 @@ const nationalParkFrom = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-      setnationalPark({
+      setNationalPark({
         ...nationalPark,
         [name]: value,
       });
@@ -47,7 +47,7 @@ const nationalParkFrom = () => {
   
       if (data.imageUrl) {
         // Update the accommodation with the local image URL
-        setnationalPark((prev) => ({
+        setNationalPark((prev) => ({
          ...prev,
           image: data.imageUrl,
         }));
@@ -121,7 +121,7 @@ const nationalParkFrom = () => {
             type="text"
             id="location"
             name="location"
-            value={nationalPark.loction}
+            value={nationalPark.location}
             onChange={handleInputChange}
             required
             placeholder='Location'
@@ -155,7 +155,7 @@ const nationalParkFrom = () => {
             placeholder='To Date'
             className="mb-4.5 w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
           />
-          {nationalPark.image && <img src={`/uploads/nationalParks/${nationalPark.image}`} width={200} alt="National Park" />}
+          {nationalPark.image && <a href={`/uploads/nationalParks/${nationalPark.image}`} download={nationalPark.image}><img src={`/uploads/nationalParks/${nationalPark.image}`} width={200} alt="National Park" /></a>}
         </div>
 
         <div className="mb-4.5">

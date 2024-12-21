@@ -89,3 +89,37 @@ export const DELETE = async (req: NextRequest, { params }: { params: { id: strin
     );
   }
 };
+
+export const PUT = async (req: NextRequest, { params }: { params: { id: string } }) => {
+  const { id } = params;
+
+  const nationalPark = await req.json(); // Use await to wait for the promise to resolve
+
+  const { name, location, description, image, month, river, season, state } = nationalPark;
+
+  console.log(id, name, location, description, image, month, river, season, state);  // Debugging: log the incoming request data
+
+  try {
+    // Now updated the parent record
+    const [nationalParkResult] = await connection.promise().query<ResultSetHeader>(
+      "UPDATE national_parks SET name = ?, location = ?, description = ?, image = ?, month = ?, river = ?, season = ?, state = ? WHERE id = ?",
+      [name, location, description, image, month, river, season, state, id]
+    );
+
+    // Check if a row was updated
+    if (nationalParkResult.affectedRows > 0) {
+      return NextResponse.json(
+        { message: "National park updated successfully" },
+        { status: 200 }
+      );
+    } else {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    }
+  } catch (error) {
+    console.error("Error updating record:", error);
+    return NextResponse.json(
+      { error: "An error occurred while updating the record" },
+      { status: 500 }
+    );
+  }
+};
