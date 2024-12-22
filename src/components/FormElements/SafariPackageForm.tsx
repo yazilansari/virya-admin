@@ -23,9 +23,9 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
         day: 1,
         date: '',
         description: '',
-        activities: [''],
+        activities: [{ id: '', activity: '' }],
         accommodation: [
-          { name: '', rating: '', link: '', meals: [''], roomTypes: [''], imageUrl: '' },
+          { id: '', name: '', rating: '', link: '', meals: [''], roomTypes: [''], imageUrl: '' },
         ],
       },
     ],
@@ -49,7 +49,20 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
     if (index !== null && field !== null) {
       if (activityIndex !== null) {
         const updatedItinerary = [...safariPackage.itinerary];
-        updatedItinerary[index].activities[activityIndex] = value;
+        // Check if the activity at the specified index has an `id`
+        if (updatedItinerary[index].activities[activityIndex]?.id) {
+          // Update as an object with `id` and `activity`
+          updatedItinerary[index].activities[activityIndex] = {
+            id: updatedItinerary[index].activities[activityIndex].id, // Preserve the `id`
+            activity: value, // Update the activity
+          };
+        } else {
+          // Update as a plain string
+          updatedItinerary[index].activities[activityIndex] = {
+            id: "-1", // Preserve the `id`
+            activity: value, // Update the activity
+          };
+        }
         setSafariPackage((prev) => ({
           ...prev,
           itinerary: updatedItinerary,
@@ -84,7 +97,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
       }
     };
   
-    fetchData();
+    !id && fetchData();
   }, []); // Empty dependency array ensures this runs once
 
   const handleAccommodationChange = (e, dayIndex, accommodationIndex, field) => {
@@ -120,13 +133,41 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
     }));
   };
 
-  const handleRemoveActivity = (dayIndex, activityIndex) => {
-    const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[dayIndex].activities.splice(activityIndex, 1);
-    setSafariPackage((prev) => ({
-      ...prev,
-      itinerary: updatedItinerary,
-    }));
+  const handleRemoveActivity = async (dayIndex, activityIndex, id) => {
+    console.log(id);
+    if(id) {
+      if (confirm(`Are you sure you want to delete?`)) {
+        try {
+          // Fetch additional details using the row's ID
+          const response = await fetch(`/api/safariPackage/activity/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            alert("Record deleted successfully!");
+            // Optionally, update the UI to reflect the deletion
+            const updatedItinerary = [...safariPackage.itinerary];
+            updatedItinerary[dayIndex].activities.splice(activityIndex, 1);
+            setSafariPackage((prev) => ({
+              ...prev,
+              itinerary: updatedItinerary,
+            }));
+          } else {
+            const error = await response.json();
+            alert(`Failed to delete: ${error.message}`);
+          }
+        } catch (error) {
+          console.error("Error fetching row details:", error);
+          alert("An error occurred while deleting the record.");
+        }
+      }
+    } else {
+      const updatedItinerary = [...safariPackage.itinerary];
+      updatedItinerary[dayIndex].activities.splice(activityIndex, 1);
+      setSafariPackage((prev) => ({
+        ...prev,
+        itinerary: updatedItinerary,
+      }));
+    }
   };
 
   const handleAddAccommodation = (index) => {
@@ -138,13 +179,41 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
     }));
   };
 
-  const handleRemoveAccommodation = (dayIndex, accIndex) => {
-    const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[dayIndex].accommodation.splice(accIndex, 1);
-    setSafariPackage((prev) => ({
-      ...prev,
-      itinerary: updatedItinerary,
-    }));
+  const handleRemoveAccommodation = async (dayIndex, accIndex, id) => {
+    console.log(id);
+    if(id) {
+      if (confirm(`Are you sure you want to delete?`)) {
+        try {
+          // Fetch additional details using the row's ID
+          const response = await fetch(`/api/safariPackage/accommodation/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            alert("Record deleted successfully!");
+            // Optionally, update the UI to reflect the deletion
+            const updatedItinerary = [...safariPackage.itinerary];
+            updatedItinerary[dayIndex].accommodation.splice(accIndex, 1);
+            setSafariPackage((prev) => ({
+              ...prev,
+              itinerary: updatedItinerary,
+            }));
+          } else {
+            const error = await response.json();
+            alert(`Failed to delete: ${error.message}`);
+          }
+        } catch (error) {
+          console.error("Error fetching row details:", error);
+          alert("An error occurred while deleting the record.");
+        }
+      }
+    } else {
+      const updatedItinerary = [...safariPackage.itinerary];
+      updatedItinerary[dayIndex].accommodation.splice(accIndex, 1);
+      setSafariPackage((prev) => ({
+        ...prev,
+        itinerary: updatedItinerary,
+      }));
+    }
   };
 
   const handleAddRoomType = (dayIndex, accIndex) => {
@@ -199,47 +268,84 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
   };
   
   const submitSafariPackage = async (safariPackage) => {
-    const response = await fetch('/api/safariPackage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(safariPackage),
-    });
+    if(safariPackage.id) {
+      const response = await fetch(`/api/safariPackage/${safariPackage.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(safariPackage),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to submit Safari package');
+      }
+  
+      const data = await response.json();
+      console.log(data);
+      if(data.message && data.message == 'Safari package updated successfully') {
+          window.location.href='/national-parks';
+          // redirect('/national-parks');
+      }
+    } else {
+      const response = await fetch('/api/safariPackage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(safariPackage),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to submit safari package');
-    }
+      if (!response.ok) {
+        throw new Error('Failed to submit safari package');
+      }
 
-    const data = await response.json();
-    console.log(data);
-    if(data.message && data.message == 'Safari package created successfully') {
-        window.location.href='/safari-packages';
-        // redirect('/safari-packages');
+      const data = await response.json();
+      console.log(data);
+      if(data.message && data.message == 'Safari package created successfully') {
+          window.location.href='/safari-packages';
+          // redirect('/safari-packages');
+      }
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Submitted Data:", safariPackage);
-    submitSafariPackage({
-      name: safariPackage.name,
-      duration: safariPackage.duration,
-      fromDate: safariPackage.fromDate,
-      toDate: safariPackage.toDate,
-      nationalParkId: safariPackage.nationalParkId,
-      itinerary: safariPackage.itinerary.map((day) => ({
-        ...day,
-        activities: day.activities.join(", "),  // Join activities as comma-separated string
-        accommodation: day.accommodation.map((acc) => ({
-          ...acc,
-          meals: acc.meals.join(", "),  // Join meals as comma-separated string
-          roomTypes: acc.roomTypes.join(", "),  // Join room types as comma-separated string
-          imageUrl: acc.imageUrl || '',
+    if(id) {
+      submitSafariPackage({
+        id,
+        itinerary: safariPackage.itinerary.map((day) => ({
+          ...day,
+          activities: day.activities,  // Join activities as comma-separated string
+          accommodation: day.accommodation.map((acc) => ({
+            ...acc,
+            meals: acc.meals.join(", "),  // Join meals as comma-separated string
+            roomTypes: acc.roomTypes.join(", "),  // Join room types as comma-separated string
+            imageUrl: acc.imageUrl || '',
+          })),
+        }))
+      });
+    } else {
+      submitSafariPackage({
+        name: safariPackage.name,
+        duration: safariPackage.duration,
+        fromDate: safariPackage.fromDate,
+        toDate: safariPackage.toDate,
+        nationalParkId: safariPackage.nationalParkId,
+        itinerary: safariPackage.itinerary.map((day) => ({
+          ...day,
+          activities: day.activities,  // Join activities as comma-separated string
+          accommodation: day.accommodation.map((acc) => ({
+            ...acc,
+            meals: acc.meals.join(", "),  // Join meals as comma-separated string
+            roomTypes: acc.roomTypes.join(", "),  // Join room types as comma-separated string
+            imageUrl: acc.imageUrl || '',
+          })),
         })),
-      })),
-      available: safariPackage.available,
-    });
+        available: safariPackage.available,
+      });
+    }
   };
 
   return (
@@ -363,14 +469,16 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                 <div key={activityIndex}>
                   <input
                     type="text"
-                    value={activity}
+                    value={activity.activity}
                     onChange={(e) => handleInputChange(e, index, 'activities', activityIndex)}
                     placeholder={`Activity ${activityIndex + 1}`}
                     className="w-100 mx-1 mb-4.5 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
                   />
-                  <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveActivity(index, activityIndex)}>
+                  { !activity.id ? <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveActivity(index, activityIndex)}>
                     Remove Activity
-                  </button>
+                  </button> : <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveActivity(index, activityIndex, activity.id)}>
+                    Remove Activity
+                  </button>}
                 </div>
               ))}
               <button type="button" className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleAddActivity(index)}>
@@ -463,16 +571,18 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                     id={`image${index}${accIndex}`}
                     onChange={(e) => handleImageUpload(e, index, accIndex)}
                     accept="image/*"
-                    required
+                    required = {!id ? true : false}
                     className="mb-4.5 w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
                   />
                   {/* <br/><br/> */}
                   {accommodation.imageUrl && <a href={`/uploads/safariPackages/${accommodation.imageUrl}`} download={accommodation.imageUrl}><img src={`/uploads/safariPackages/${accommodation.imageUrl}`} width={200} alt="Accommodation" /></a>}
                 </div>
 
-                <button type="button" className="w-50 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveAccommodation(index, accIndex)}>
+                {!id ? <button type="button" className="w-50 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveAccommodation(index, accIndex)}>
                   Remove Accommodation
-                </button>
+                </button> : <button type="button" className="w-50 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveAccommodation(index, accIndex, accommodation.id)}>
+                  Remove Accommodation
+                </button>}
               </div>
             ))}
             <div className="mb-4.5">
@@ -495,8 +605,8 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                   day: safariPackage.itinerary.length + 1,
                   date: '',
                   description: '',
-                  activities: [''],
-                  accommodation: [{ name: '', rating: '', link: '', meals: [''], roomTypes: [''] }],
+                  activities: [{ id: '', activity: '' }],
+                  accommodation: [{ id: '', name: '', rating: '', link: '', meals: [''], roomTypes: [''], imageUrl: '' },],
                 },
               ],
             })

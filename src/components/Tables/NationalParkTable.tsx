@@ -94,7 +94,7 @@ const Modal = ({ isOpen, onClose, data }) => {
     const data = await response.json();
     console.log(data);
     if(data.message && data.message == 'National park updated successfully') {
-        window.location.href='/national-parks';
+        window.location.href='/safari-packages';
         // redirect('/national-parks');
     }
   };

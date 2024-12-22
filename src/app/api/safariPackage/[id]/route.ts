@@ -17,7 +17,7 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
       itineraries.map(async (itinerary: any) => {
         // Fetch activities
         const [activities] = await connection.promise().query(
-          'SELECT activity FROM activities WHERE itinerary_id = ?',
+          'SELECT id, activity FROM activities WHERE itinerary_id = ?',
           [itinerary.id]
         );
 
@@ -44,6 +44,7 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
 
             // Return formatted accommodation
             return {
+              id: accommodation.id,
               name: accommodation.name,
               rating: accommodation.rating,
               link: accommodation.link,
@@ -56,10 +57,11 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
 
         // Return formatted itinerary
         return {
+          id: itinerary.id,
           day: itinerary.day,
           date: itinerary.date,
           description: itinerary.description,
-          activities: activities.map((activity: any) => activity.activity),
+          activities: activities,
           accommodation: formattedAccommodations,
         };
       })
@@ -105,5 +107,124 @@ export const DELETE = async (req: NextRequest, { params }: { params: { id: strin
       { error: "An error occurred while deleting the record" },
       { status: 500 }
     );
+  }
+};
+
+export const PUT = async (req: NextRequest, { params }: { params: { id: string } }) => {
+  const safariPackage = await req.json(); // Use await to wait for the promise to resolve
+
+  const { id } = params;
+
+  const { itinerary } = safariPackage;
+
+  console.log(itinerary, id);  // Debugging: log the incoming request data
+
+  try {
+    // Update the itinerary and associated data into the itinerary, activities, and accommodations tables
+    for (const day of itinerary) {
+      const [itineraryResult] = await connection.promise().query<ResultSetHeader>(
+        'UPDATE itineraries SET description = ? WHERE safari_package_id = ? AND id = ?',
+        [day.description, id, day.id]
+      );
+
+      // Retrieve the updated itinerary ID
+      // const [itineraryRows] = await connection.promise().query<RowDataPacket[]>(
+      //   'SELECT id FROM itineraries WHERE safari_package_id = ? AND description = ?',
+      //   [id, day.description]
+      // );
+
+      // const itineraryId = itineraryRows[0]?.id; // Assuming one row per `day`
+      // console.log('Updated Itinerary ID:', itineraryId);
+
+      // Update activities for this day
+      for (const activity of day.activities) {
+        // console.log('Activity:', activity);
+        if(activity.id != '-1') {
+          await connection.promise().query(
+            'UPDATE activities SET activity = ? WHERE safari_package_id = ? AND itinerary_id = ? AND id = ?',
+            [activity, id, day.id, activity.id]
+          );
+        } else {
+          await connection.promise().query(
+            'INSERT INTO activities (safari_package_id, itinerary_id, activity) VALUES (?, ?, ?)',
+            [id, day.id, activity.activity]
+          );
+        }
+        
+      }
+
+      // Update accommodations for this day
+      for (const accommodation of day.accommodation) {
+        if(accommodation.id) {
+          await connection.promise().query<ResultSetHeader>(
+            'UPDATE accommodations SET name = ?, rating = ?, link = ?, image_url = ? WHERE safari_package_id = ? AND itinerary_id = ? AND id = ?',
+            [
+              accommodation.name,
+              accommodation.rating,
+              accommodation.link,
+              accommodation.imageUrl,
+              id,
+              day.id,
+              accommodation.id
+            ]
+          );
+        } else {
+          await connection.promise().query<ResultSetHeader>(
+            'INSERT INTO accommodations (safari_package_id, itinerary_id, name, rating, link, image_url) VALUES (?, ?, ?, ?, ?, ?)',
+            [
+              id,
+              day.id,
+              accommodation.name,
+              accommodation.rating,
+              accommodation.link,
+              accommodation.imageUrl
+            ]
+          );
+  
+        }        
+        // Retrieve the updated accommodation ID
+        // const [accommodationRows] = await connection.promise().query<RowDataPacket[]>(
+        // 'SELECT id FROM accommodations WHERE safari_package_id = ? AND itinerary_id = ? AND name = ?',
+        // [id, itineraryId, accommodation.name]
+        // );
+
+        // const accommodationId = accommodationRows[0]?.id;
+        // console.log('Updated Accommodation ID:', accommodationId);
+
+        // connection.query("DELETE FROM room_types WHERE safari_package_id = ?", [id]);
+        // connection.query("DELETE FROM meals WHERE safari_package_id = ?", [id]);
+
+        // Update meals for this accomodation
+        // for (const meal of accommodation.meals.split(',')) {
+        //   await connection.promise().query(
+        //     'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+        //     [                
+        //       id,
+        //       day.id,
+        //       accommodation.id,
+        //       meal
+        //     ]
+        //   );
+        // }
+
+        // Insert room types for this accomodation
+        // for (const roomType of accommodation.roomTypes.split(',')) {
+        //   await connection.promise().query(
+        //     'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+        //     [
+        //       id,
+        //       day.id,
+        //       accommodation.id,
+        //       roomType
+        //     ]
+        //   );
+        // }
+      }
+    }
+
+    return NextResponse.json({ message: 'Safari package updated successfully' });
+  } catch (error) {
+    console.error('Error inserting safari package:', error);
+    return NextResponse.json({ error: 'Internal Server Error' });
   }
 };
