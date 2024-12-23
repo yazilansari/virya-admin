@@ -23,9 +23,9 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
         day: 1,
         date: '',
         description: '',
-        activities: [{ id: '', activity: '' }],
+        activities: [{ id: '-1', activity: '' }],
         accommodation: [
-          { id: '', name: '', rating: '', link: '', meals: [''], roomTypes: [''], imageUrl: '' },
+          { id: '', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },
         ],
       },
     ],
@@ -106,9 +106,21 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
     if (field === 'meals' || field === 'roomTypes') {
       // Split the input value into an array by commas
       const updatedItinerary = [...safariPackage.itinerary];
-      updatedItinerary[dayIndex].accommodation[accommodationIndex][field] = value
-        .split(',')
-        .map((item) => item.trim()); // Trim spaces after commas
+      if(updatedItinerary[dayIndex].accommodation[accommodationIndex][field]?.id) {
+          // Update as an object with `id` and `activity`
+          updatedItinerary[dayIndex].accommodation[accommodationIndex][field] = {
+          id: updatedItinerary[dayIndex].accommodation[accommodationIndex][field].id, // Preserve the `id`
+          type: value, // Update the activity
+        };
+      } else {
+        // Update as a plain string
+        updatedItinerary[dayIndex].accommodation[accommodationIndex][field] = {
+          id: "-1", // Preserve the `id`
+          type: value, // Update the activity
+        };
+      }
+        // .split(',')
+        // .map((item) => item.trim()); // Trim spaces after commas
       setSafariPackage((prev) => ({
         ...prev,
         itinerary: updatedItinerary,
@@ -172,7 +184,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleAddAccommodation = (index) => {
     const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[index].accommodation.push({ name: '', rating: '', link: '', meals: [''], roomTypes: [''] });
+    updatedItinerary[index].accommodation.push({ name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }] });
     setSafariPackage((prev) => ({
       ...prev,
       itinerary: updatedItinerary,
@@ -284,8 +296,8 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
       const data = await response.json();
       console.log(data);
       if(data.message && data.message == 'Safari package updated successfully') {
-          window.location.href='/national-parks';
-          // redirect('/national-parks');
+          window.location.href='/safari-packages';
+          // redirect('/safari-packages');
       }
     } else {
       const response = await fetch('/api/safariPackage', {
@@ -536,10 +548,10 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                 </div>
 
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Room Types (comma separated)</label>
+                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Room Types</label>
                   <input
                     type="text"
-                    value={accommodation.roomTypes.join(', ')} // Join array with commas
+                    value={accommodation.roomTypes[accIndex]?.type} // Join array with commas
                     onChange={(e) =>
                       handleAccommodationChange(e, index, accIndex, 'roomTypes')
                     }
@@ -550,10 +562,10 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                 </div>
 
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Meals (comma separated)</label>
+                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Meals</label>
                   <input
                     type="text"
-                    value={accommodation.meals.join(', ')} // Join array with commas
+                    value={accommodation.meals[accIndex]?.type} // Join array with commas
                     onChange={(e) =>
                       handleAccommodationChange(e, index, accIndex, 'meals')
                     }
@@ -605,8 +617,8 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                   day: safariPackage.itinerary.length + 1,
                   date: '',
                   description: '',
-                  activities: [{ id: '', activity: '' }],
-                  accommodation: [{ id: '', name: '', rating: '', link: '', meals: [''], roomTypes: [''], imageUrl: '' },],
+                  activities: [{ id: '-1', activity: '' }],
+                  accommodation: [{ id: '', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },],
                 },
               ],
             })
