@@ -25,7 +25,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
         description: '',
         activities: [{ id: '-1', activity: '' }],
         accommodation: [
-          { id: '', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },
+          { id: '-1', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },
         ],
       },
     ],
@@ -50,7 +50,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
       if (activityIndex !== null) {
         const updatedItinerary = [...safariPackage.itinerary];
         // Check if the activity at the specified index has an `id`
-        if (updatedItinerary[index].activities[activityIndex]?.id) {
+        if (updatedItinerary[index].activities[activityIndex]?.id != "-1") {
           // Update as an object with `id` and `activity`
           updatedItinerary[index].activities[activityIndex] = {
             id: updatedItinerary[index].activities[activityIndex].id, // Preserve the `id`
@@ -100,21 +100,24 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
     !id && fetchData();
   }, []); // Empty dependency array ensures this runs once
 
-  const handleAccommodationChange = (e, dayIndex, accommodationIndex, field) => {
+  const handleAccommodationChange = (e, dayIndex, accommodationIndex, field, fieldIndex) => {
     const { name, value } = e.target;
 
     if (field === 'meals' || field === 'roomTypes') {
       // Split the input value into an array by commas
       const updatedItinerary = [...safariPackage.itinerary];
-      if(updatedItinerary[dayIndex].accommodation[accommodationIndex][field]?.id) {
+      // console.log(updatedItinerary[dayIndex].accommodation[accommodationIndex][field][fieldIndex]);
+      if(updatedItinerary[dayIndex].accommodation[accommodationIndex][field][fieldIndex]?.id != "-1") {
+        // console.log('if');
           // Update as an object with `id` and `activity`
-          updatedItinerary[dayIndex].accommodation[accommodationIndex][field] = {
-          id: updatedItinerary[dayIndex].accommodation[accommodationIndex][field].id, // Preserve the `id`
+          updatedItinerary[dayIndex].accommodation[accommodationIndex][field][fieldIndex] = {
+          id: updatedItinerary[dayIndex].accommodation[accommodationIndex][field][fieldIndex].id, // Preserve the `id`
           type: value, // Update the activity
         };
       } else {
+        // console.log('else');
         // Update as a plain string
-        updatedItinerary[dayIndex].accommodation[accommodationIndex][field] = {
+        updatedItinerary[dayIndex].accommodation[accommodationIndex][field][fieldIndex] = {
           id: "-1", // Preserve the `id`
           type: value, // Update the activity
         };
@@ -138,7 +141,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleAddActivity = (index) => {
     const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[index].activities.push('');
+    updatedItinerary[index].activities.push({ id: '-1', activity: '' });
     setSafariPackage((prev) => ({
       ...prev,
       itinerary: updatedItinerary,
@@ -147,7 +150,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleRemoveActivity = async (dayIndex, activityIndex, id) => {
     console.log(id);
-    if(id) {
+    if(id && id != "-1") {
       if (confirm(`Are you sure you want to delete?`)) {
         try {
           // Fetch additional details using the row's ID
@@ -184,7 +187,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleAddAccommodation = (index) => {
     const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[index].accommodation.push({ name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }] });
+    updatedItinerary[index].accommodation.push({ id: '-1', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }] });
     setSafariPackage((prev) => ({
       ...prev,
       itinerary: updatedItinerary,
@@ -193,7 +196,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleRemoveAccommodation = async (dayIndex, accIndex, id) => {
     console.log(id);
-    if(id) {
+    if(id && id != "-1") {
       if (confirm(`Are you sure you want to delete?`)) {
         try {
           // Fetch additional details using the row's ID
@@ -230,20 +233,94 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
 
   const handleAddRoomType = (dayIndex, accIndex) => {
     const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[dayIndex].accommodation[accIndex].roomTypes.push('');
+    // console.log(updatedItinerary);
+    updatedItinerary[dayIndex].accommodation[accIndex].roomTypes.push({ id: "-1", type: '' });
     setSafariPackage((prev) => ({
       ...prev,
       itinerary: updatedItinerary,
     }));
   };
 
-  const handleRemoveRoomType = (dayIndex, accIndex, roomTypeIndex) => {
+  const handleRemoveRoomType = async (dayIndex, accIndex, roomTypeIndex, id) => {
+    console.log(id);
+    if(id && id != "-1") {
+      if (confirm(`Are you sure you want to delete?`)) {
+        try {
+          // Fetch additional details using the row's ID
+          const response = await fetch(`/api/safariPackage/roomType/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            alert("Record deleted successfully!");
+            // Optionally, update the UI to reflect the deletion
+            const updatedItinerary = [...safariPackage.itinerary];
+            updatedItinerary[dayIndex].accommodation[accIndex].roomTypes.splice(roomTypeIndex, 1);
+            setSafariPackage((prev) => ({
+              ...prev,
+              itinerary: updatedItinerary,
+            }));
+          } else {
+            const error = await response.json();
+            alert(`Failed to delete: ${error.message}`);
+          }
+        } catch (error) {
+          console.error("Error fetching row details:", error);
+          alert("An error occurred while deleting the record.");
+        }
+      }
+    } else {
+      const updatedItinerary = [...safariPackage.itinerary];
+      updatedItinerary[dayIndex].accommodation[accIndex].roomTypes.splice(roomTypeIndex, 1);
+      setSafariPackage((prev) => ({
+        ...prev,
+        itinerary: updatedItinerary,
+      }));
+    }
+  };
+
+  const handleAddMeal = (dayIndex, accIndex) => {
     const updatedItinerary = [...safariPackage.itinerary];
-    updatedItinerary[dayIndex].accommodation[accIndex].roomTypes.splice(roomTypeIndex, 1);
+    updatedItinerary[dayIndex].accommodation[accIndex].meals.push({ id: "-1", type: '' });
     setSafariPackage((prev) => ({
       ...prev,
       itinerary: updatedItinerary,
     }));
+  };
+
+  const handleRemoveMeal = async (dayIndex, accIndex, mealIndex, id) => {
+    if(id && id != "-1") {
+      if (confirm(`Are you sure you want to delete?`)) {
+        try {
+          // Fetch additional details using the row's ID
+          const response = await fetch(`/api/safariPackage/meal/${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            alert("Record deleted successfully!");
+            // Optionally, update the UI to reflect the deletion
+            const updatedItinerary = [...safariPackage.itinerary];
+            updatedItinerary[dayIndex].accommodation[accIndex].meals.splice(mealIndex, 1);
+            setSafariPackage((prev) => ({
+              ...prev,
+              itinerary: updatedItinerary,
+            }));
+          } else {
+            const error = await response.json();
+            alert(`Failed to delete: ${error.message}`);
+          }
+        } catch (error) {
+          console.error("Error fetching row details:", error);
+          alert("An error occurred while deleting the record.");
+        }
+      }
+    } else {
+      const updatedItinerary = [...safariPackage.itinerary];
+      updatedItinerary[dayIndex].accommodation[accIndex].meals.splice(mealIndex, 1);
+      setSafariPackage((prev) => ({
+        ...prev,
+        itinerary: updatedItinerary,
+      }));
+    }
   };
 
   const handleImageUpload = async (e, dayIndex, accIndex) => {
@@ -324,16 +401,16 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Submitted Data:", safariPackage);
-    if(id) {
+    if(id && id != "-1") {
       submitSafariPackage({
         id,
         itinerary: safariPackage.itinerary.map((day) => ({
           ...day,
-          activities: day.activities,  // Join activities as comma-separated string
+          activities: day.activities,
           accommodation: day.accommodation.map((acc) => ({
             ...acc,
-            meals: acc.meals.join(", "),  // Join meals as comma-separated string
-            roomTypes: acc.roomTypes.join(", "),  // Join room types as comma-separated string
+            meals: acc.meals,
+            roomTypes: acc.roomTypes,
             imageUrl: acc.imageUrl || '',
           })),
         }))
@@ -350,8 +427,8 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
           activities: day.activities,  // Join activities as comma-separated string
           accommodation: day.accommodation.map((acc) => ({
             ...acc,
-            meals: acc.meals.join(", "),  // Join meals as comma-separated string
-            roomTypes: acc.roomTypes.join(", "),  // Join room types as comma-separated string
+            meals: acc.meals,
+            roomTypes: acc.roomTypes,
             imageUrl: acc.imageUrl || '',
           })),
         })),
@@ -546,34 +623,64 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                     className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
                   />
                 </div>
-
+                
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Room Types</label>
-                  <input
-                    type="text"
-                    value={accommodation.roomTypes[accIndex]?.type} // Join array with commas
-                    onChange={(e) =>
-                      handleAccommodationChange(e, index, accIndex, 'roomTypes')
-                    }
-                    required
-                    placeholder="Room Type 1, Room Type 2"
-                    className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
-                  />
+                  {
+                    accommodation.roomTypes.map((roomType, roomTypeIndex) => (
+                      <div key={roomTypeIndex}>
+                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">Room Types</label>
+                        <input
+                          type="text"
+                          value={roomType?.type} // Join array with commas
+                          onChange={(e) =>
+                            handleAccommodationChange(e, index, accIndex, 'roomTypes', roomTypeIndex)
+                          }
+                          required
+                          id={`roomType${index}${accIndex}${roomTypeIndex}`}
+                          placeholder={`Room Type ${roomTypeIndex + 1}`}
+                          className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
+                        />
+                        { !roomType.id ? <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveRoomType(index, accIndex, roomTypeIndex)}>
+                          Remove Room Type
+                        </button> : <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveRoomType(index, accIndex, roomTypeIndex, roomType.id)}>
+                          Remove Room Type
+                        </button>
+                        }
+                      </div>   
+                    ))
+                  }
+                  <button type="button" className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleAddRoomType(index, accIndex)}>
+                    Add Room Type
+                  </button>
                 </div>
-
+                
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">Meals</label>
-                  <input
-                    type="text"
-                    value={accommodation.meals[accIndex]?.type} // Join array with commas
-                    onChange={(e) =>
-                      handleAccommodationChange(e, index, accIndex, 'meals')
+                {accommodation.meals.map((meal, mealIndex) => (
+                  <div key={mealIndex}>
+                   <label className="mb-3 block text-sm font-medium text-black dark:text-white">Meals</label>
+                   <input
+                     type="text"
+                     value={meal?.type} // Join array with commas
+                     onChange={(e) =>
+                       handleAccommodationChange(e, index, accIndex, 'meals', mealIndex)
+                     }
+                     required
+                     id={`meal${index}${accIndex}${mealIndex}`}
+                     placeholder={`Meal ${mealIndex + 1}`}
+                     className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
+                   />
+                    { !meal.id ? <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveMeal(index, accIndex, mealIndex)}>
+                        Remove Meal
+                      </button> : <button type="button"className="mb-4.5 inline-flex items-center justify-center rounded-full bg-red px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleRemoveMeal(index, accIndex, mealIndex, meal.id)}>
+                        Remove Meal
+                      </button>
                     }
-                    required
-                    placeholder="Meal 1, Meal 2"
-                    className="w-100 rounded-lg border-[1.5px] border-primary bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:bg-form-input dark:text-white"
-                  />
-                </div>
+                  </div>
+                ))}
+                <button type="button" className="inline-flex items-center justify-center rounded-full bg-primary px-3 py-1 text-center text-sm font-medium text-white hover:bg-opacity-90" onClick={() => handleAddMeal(index, accIndex)}>
+                  Add Meal
+                </button>
+              </div>
 
                 {/* Image Upload */}
                 <div>
@@ -618,7 +725,7 @@ const SafariPackageFrom: React.FC<SafariPackageFromProps> = ({ id }) => {
                   date: '',
                   description: '',
                   activities: [{ id: '-1', activity: '' }],
-                  accommodation: [{ id: '', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },],
+                  accommodation: [{ id: '-1', name: '', rating: '', link: '', meals: [{ id: '-1', type: '' }], roomTypes: [{ id: '-1', type: '' }], imageUrl: '' },],
                 },
               ],
             })

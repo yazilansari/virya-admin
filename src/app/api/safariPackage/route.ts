@@ -58,11 +58,11 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       const itineraryId = itineraryResult.insertId;
 
       // Insert activities for this day
-      for (const activity of day.activities.split(',')) {
+      for (const activity of day.activities) {
         console.log('Activity:', activity);
         await connection.promise().query(
           'INSERT INTO activities (safari_package_id, itinerary_id, activity) VALUES (?, ?, ?)',
-          [safariPackageId, itineraryId, activity]
+          [safariPackageId, itineraryId, activity.activity]
         );
       }
 
@@ -83,27 +83,27 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
         const accommodationId = accommodationResult.insertId;
 
         // Insert meals for this accomodation
-        for (const meal of accommodation.meals.split(',')) {
+        for (const meal of accommodation.meals) {
           await connection.promise().query(
             'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
             [
               safariPackageId,
               itineraryId,
               accommodationId,
-              meal
+              meal.type
             ]
           );
         }
 
         // Insert room types for this accomodation
-        for (const roomType of accommodation.roomTypes.split(',')) {
+        for (const roomType of accommodation.roomTypes) {
           await connection.promise().query(
             'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
             [
               safariPackageId,
               itineraryId,
               accommodationId,
-              roomType
+              roomType.type
             ]
           );
         }

@@ -32,13 +32,13 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
           accommodations.map(async (accommodation: any) => {
             // Fetch meals
             const [meals] = await connection.promise().query(
-              'SELECT type FROM meals WHERE accommodation_id = ?',
+              'SELECT id, type FROM meals WHERE accommodation_id = ?',
               [accommodation.id]
             );
 
             // Fetch room types
             const [roomTypes] = await connection.promise().query(
-              'SELECT type FROM room_types WHERE accommodation_id = ?',
+              'SELECT id, type FROM room_types WHERE accommodation_id = ?',
               [accommodation.id]
             );
 
@@ -48,8 +48,8 @@ export const GET = async (req: NextRequest, { params }: { params: { id: string }
               name: accommodation.name,
               rating: accommodation.rating,
               link: accommodation.link,
-              meals: meals.map((meal: any) => meal.type),
-              roomTypes: roomTypes.map((roomType: any) => roomType.type),
+              meals: meals,
+              roomTypes: roomTypes,
               imageUrl: accommodation.image_url,
             };
           })
@@ -120,8 +120,8 @@ export const PUT = async (req: NextRequest, { params }: { params: { id: string }
   console.log(itinerary, id);  // Debugging: log the incoming request data
 
   try {
-    await connection.promise().query("DELETE FROM meals WHERE safari_package_id = ?", [id]);
-    await connection.promise().query("DELETE FROM room_types WHERE safari_package_id = ?", [id]);
+    // await connection.promise().query("DELETE FROM meals WHERE safari_package_id = ?", [id]);
+    // await connection.promise().query("DELETE FROM room_types WHERE safari_package_id = ?", [id]);
     
     // Update the itinerary and associated data into the itinerary, activities, and accommodations tables
     for (const day of itinerary) {
@@ -130,22 +130,13 @@ export const PUT = async (req: NextRequest, { params }: { params: { id: string }
         [day.description, id, day.id]
       );
 
-      // Retrieve the updated itinerary ID
-      // const [itineraryRows] = await connection.promise().query<RowDataPacket[]>(
-      //   'SELECT id FROM itineraries WHERE safari_package_id = ? AND description = ?',
-      //   [id, day.description]
-      // );
-
-      // const itineraryId = itineraryRows[0]?.id; // Assuming one row per `day`
-      // console.log('Updated Itinerary ID:', itineraryId);
-
       // Update activities for this day
       for (const activity of day.activities) {
         // console.log('Activity:', activity);
         if(activity.id != '-1') {
           await connection.promise().query(
             'UPDATE activities SET activity = ? WHERE safari_package_id = ? AND itinerary_id = ? AND id = ?',
-            [activity, id, day.id, activity.id]
+            [activity.activity, id, day.id, activity.id]
           );
         } else {
           await connection.promise().query(
@@ -157,7 +148,7 @@ export const PUT = async (req: NextRequest, { params }: { params: { id: string }
 
       // Update accommodations for this day
       for (const accommodation of day.accommodation) {
-        if(accommodation.id) {
+        if(accommodation.id && accommodation.id != "-1") {
           // console.log('if');
           await connection.promise().query<ResultSetHeader>(
             'UPDATE accommodations SET name = ?, rating = ?, link = ?, image_url = ? WHERE safari_package_id = ? AND itinerary_id = ? AND id = ?',
@@ -172,34 +163,59 @@ export const PUT = async (req: NextRequest, { params }: { params: { id: string }
             ]
           );
 
-          for (const meal of accommodation.meals.split(',')) {
+          for (const meal of accommodation.meals) {
             // console.log('Meal:', meal);
             // console.log('accommodationId:', accommodation.id);
             // console.log('itineraryId:', day.id);
             // console.log('id:', id);
-            await connection.promise().query(
-              'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-              [                
-                id,
-                day.id,
-                accommodation.id,
-                meal
-              ]
-            );
+            if(meal.id && meal.id != "-1") {
+              await connection.promise().query(
+                'UPDATE meals SET type = ? WHERE safari_package_id = ? AND itinerary_id = ? AND accommodation_id = ? AND id = ?',
+                [
+                  meal.type,                
+                  id,
+                  day.id,
+                  accommodation.id,
+                  meal.id
+                ]
+              );
+            } else {
+              await connection.promise().query(
+                'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+                [
+                  id,
+                  day.id,
+                  accommodation.id,
+                  meal.type
+                ]
+              );
+            }
           }
 
-          for (const roomType of accommodation.roomTypes.split(',')) {
-            await connection.promise().query(
-              'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-              [
-                id,
-                day.id,
-                accommodation.id,
-                roomType
-              ]
-            );
+          for (const roomType of accommodation.roomTypes) {
+            if(roomType.id && roomType.id != "-1") {
+              await connection.promise().query(
+                'UPDATE room_types SET type = ? WHERE safari_package_id = ? AND itinerary_id = ? AND accommodation_id = ? AND id = ?',
+                [
+                  roomType.type,
+                  id,
+                  day.id,
+                  accommodation.id,
+                  roomType.id
+                ]
+              );
+            } else {
+              await connection.promise().query(
+                'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+                [
+                  id,
+                  day.id,
+                  accommodation.id,
+                  roomType.type
+                ]
+              );
+            }    
           }
-
         } else {
           const [accommodationResult] = await connection.promise().query<ResultSetHeader>(
             'INSERT INTO accommodations (safari_package_id, itinerary_id, name, rating, link, image_url) VALUES (?, ?, ?, ?, ?, ?)',
@@ -215,65 +231,60 @@ export const PUT = async (req: NextRequest, { params }: { params: { id: string }
 
           const accommodationId = accommodationResult.insertId;
 
-          for (const meal of accommodation.meals.split(',')) {
-            await connection.promise().query(
-              'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-              [                
-                id,
-                day.id,
-                accommodationId,
-                meal
-              ]
-            );
+          for (const meal of accommodation.meals) {
+            // console.log('Meal:', meal);
+            // console.log('accommodationId:', accommodation.id);
+            // console.log('itineraryId:', day.id);
+            // console.log('id:', id);
+            if(meal.id && meal.id != "-1") {
+              await connection.promise().query(
+                'UPDATE meals SET type = ? WHERE safari_package_id = ? AND itinerary_id = ? AND accommodation_id = ? AND id = ?',
+                [
+                  meal.type,                
+                  id,
+                  day.id,
+                  accommodationId,
+                  meal.id
+                ]
+              );
+            } else {
+              await connection.promise().query(
+                'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+                [
+                  id,
+                  day.id,
+                  accommodationId,
+                  meal.type
+                ]
+              );
+            }
           }
 
-          for (const roomType of accommodation.roomTypes.split(',')) {
-            await connection.promise().query(
-              'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-              [
-                id,
-                day.id,
-                accommodationId,
-                roomType
-              ]
-            );
+          for (const roomType of accommodation.roomTypes) {
+            if(roomType.id && roomType.id != "-1") {
+              await connection.promise().query(
+                'UPDATE room_types SET type = ? WHERE safari_package_id = ? AND itinerary_id = ? AND accommodation_id = ? AND id = ?',
+                [
+                  roomType.type,
+                  id,
+                  day.id,
+                  accommodationId,
+                  roomType.id
+                ]
+              );
+            } else {
+              await connection.promise().query(
+                'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
+                [
+                  id,
+                  day.id,
+                  accommodationId,
+                  roomType.type
+                ]
+              );
+            }    
           }
-  
-        }        
-        // Retrieve the updated accommodation ID
-        // const [accommodationRows] = await connection.promise().query<RowDataPacket[]>(
-        // 'SELECT id FROM accommodations WHERE safari_package_id = ? AND itinerary_id = ? AND name = ?',
-        // [id, itineraryId, accommodation.name]
-        // );
-
-        // const accommodationId = accommodationRows[0]?.id;
-        // console.log('Updated Accommodation ID:', accommodationId);
-
-        // Update meals for this accomodation
-        // for (const meal of accommodation.meals.split(',')) {
-        //   await connection.promise().query(
-        //     'INSERT INTO meals (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-        //     [                
-        //       id,
-        //       day.id,
-        //       accommodation.id,
-        //       meal
-        //     ]
-        //   );
-        // }
-
-        // Insert room types for this accomodation
-        // for (const roomType of accommodation.roomTypes.split(',')) {
-        //   await connection.promise().query(
-        //     'INSERT INTO room_types (safari_package_id, itinerary_id, accommodation_id, type) VALUES (?, ?, ?, ?)',
-        //     [
-        //       id,
-        //       day.id,
-        //       accommodation.id,
-        //       roomType
-        //     ]
-        //   );
-        // }
+        }
       }
     }
 

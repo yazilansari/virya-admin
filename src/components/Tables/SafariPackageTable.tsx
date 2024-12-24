@@ -37,7 +37,7 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
                         value.activities.map((val, k) => (
                           <tr key={k} className="border-b">
                             <td className="border border-gray-400 px-4 py-2">{k + 1}</td>
-                            <td className="border border-gray-400 px-4 py-2">{val}</td>
+                            <td className="border border-gray-400 px-4 py-2">{val.activity}</td>
                           </tr>
                         ))
                       }
@@ -62,8 +62,8 @@ const Modal = ({ isOpen, onClose, data, isLoading }) => {
                               <td className="border border-gray-400 px-4 py-2">{v.name}</td>
                               <td className="border border-gray-400 px-4 py-2">{v.rating}</td>
                               <td className="border border-gray-400 px-4 py-2"><a className="text-blue-600" href={v.link} target="_blank">Visit</a></td>
-                              <td className="border border-gray-400 px-4 py-2">{v.meals.map((va, ind) => <p key={ind}>{va},</p>) }</td>
-                              <td className="border border-gray-400 px-4 py-2">{v.roomTypes.map((valu, index) => <p key={index}>{valu},</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2">{v.meals.map((va, ind) => <p key={ind}>{va.type},</p>) }</td>
+                              <td className="border border-gray-400 px-4 py-2">{v.roomTypes.map((valu, index) => <p key={index}>{valu.type},</p>) }</td>
                               <td className="border border-gray-400 px-4 py-2"><a href={`/uploads/safariPackages/${v.imageUrl}`} download={v.imageUrl}><img src={`/uploads/safariPackages/${v.imageUrl}`} alt={v.hotelName} height={100} width={100}/></a></td>
                             </tr>
                           ))
